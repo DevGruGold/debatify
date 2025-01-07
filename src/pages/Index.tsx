@@ -31,6 +31,7 @@ const Index = () => {
   const [participants, setParticipants] = useState<AI[]>([]);
   const [moderator, setModerator] = useState<AI | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [winner, setWinner] = useState<string>("");
 
   const handleTopicSubmit = (newTopic: string) => {
     setTopic(newTopic);
@@ -39,6 +40,14 @@ const Index = () => {
     setResponses(new Array(participants.length).fill(""));
     setSummary("");
     setChatMessages([]);
+    setWinner("");
+  };
+
+  const determineWinner = () => {
+    // For this mock implementation, we'll randomly select a winner
+    // In a real implementation, this could be based on response quality, engagement, or other metrics
+    const randomIndex = Math.floor(Math.random() * participants.length);
+    return participants[randomIndex].name;
   };
 
   const handleTimeUp = () => {
@@ -60,7 +69,9 @@ const Index = () => {
       });
     } else {
       setIsDebating(false);
-      const finalSummary = `Mock summary of the debate on "${topic}"`;
+      const winnerName = determineWinner();
+      setWinner(winnerName);
+      const finalSummary = `After a thoughtful debate on "${topic}", ${winnerName} has been declared the winner! Their arguments were particularly compelling and well-structured.`;
       setSummary(finalSummary);
       
       // Add moderator summary to chat output
@@ -115,6 +126,13 @@ const Index = () => {
               </div>
 
               {moderator && <Moderator summary={summary} />}
+
+              {winner && (
+                <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-white p-4 rounded-lg shadow-lg animate-bounce">
+                  <h3 className="text-xl font-bold">🏆 Winner Announced!</h3>
+                  <p className="mt-2">{winner} has won the debate!</p>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {participants.map((ai, index) => (
