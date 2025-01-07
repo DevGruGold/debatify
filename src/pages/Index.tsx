@@ -4,6 +4,7 @@ import { DebateTimer } from "@/components/DebateTimer";
 import { AIParticipant } from "@/components/AIParticipant";
 import { Moderator } from "@/components/Moderator";
 import { AISelector } from "@/components/AISelector";
+import { ChatOutput } from "@/components/ChatOutput";
 import { MessageSquare, Send } from "lucide-react";
 
 const DEBATE_DURATION = 60; // seconds
@@ -15,6 +16,12 @@ interface AI {
   role: "participant" | "moderator";
 }
 
+interface ChatMessage {
+  ai: string;
+  message: string;
+  timestamp: Date;
+}
+
 const Index = () => {
   const [topic, setTopic] = useState("");
   const [activeAI, setActiveAI] = useState<number>(-1);
@@ -23,6 +30,7 @@ const Index = () => {
   const [isDebating, setIsDebating] = useState(false);
   const [participants, setParticipants] = useState<AI[]>([]);
   const [moderator, setModerator] = useState<AI | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   const handleTopicSubmit = (newTopic: string) => {
     setTopic(newTopic);
@@ -30,6 +38,7 @@ const Index = () => {
     setIsDebating(true);
     setResponses(new Array(participants.length).fill(""));
     setSummary("");
+    setChatMessages([]);
   };
 
   const handleTimeUp = () => {
@@ -37,12 +46,29 @@ const Index = () => {
       setActiveAI(activeAI + 1);
       setResponses(prev => {
         const newResponses = [...prev];
-        newResponses[activeAI] = `Mock response for ${topic} from AI ${activeAI + 1}`;
+        const response = `Mock response for ${topic} from AI ${activeAI + 1}`;
+        newResponses[activeAI] = response;
+        
+        // Add message to chat output
+        setChatMessages(prev => [...prev, {
+          ai: participants[activeAI].name,
+          message: response,
+          timestamp: new Date()
+        }]);
+        
         return newResponses;
       });
     } else {
       setIsDebating(false);
-      setSummary(`Mock summary of the debate on "${topic}"`);
+      const finalSummary = `Mock summary of the debate on "${topic}"`;
+      setSummary(finalSummary);
+      
+      // Add moderator summary to chat output
+      setChatMessages(prev => [...prev, {
+        ai: moderator?.name || "Moderator",
+        message: finalSummary,
+        timestamp: new Date()
+      }]);
     }
   };
 
@@ -59,7 +85,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section - Reduced padding */}
+      {/* Hero Section */}
       <section className="bg-gradient-to-b from-purple-50 to-white py-8 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -72,7 +98,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Main Content - Reduced spacing */}
+      {/* Main Content */}
       <main className="py-4 px-4">
         <div className="max-w-7xl mx-auto space-y-4">
           <AISelector onSelectionChange={handleAISelection} />
@@ -101,12 +127,16 @@ const Index = () => {
                   />
                 ))}
               </div>
+
+              <div className="mt-6">
+                <ChatOutput messages={chatMessages} />
+              </div>
             </>
           )}
         </div>
       </main>
 
-      {/* Footer - Reduced padding */}
+      {/* Footer */}
       <footer className="bg-gray-900 text-white py-8 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
