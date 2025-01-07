@@ -18,8 +18,7 @@ export const TopicInput = ({ onSubmit }: TopicInputProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto space-y-4">
-      <h1 className="text-3xl font-bold text-center mb-8">AI Debate Platform</h1>
+    <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto space-y-2">
       <div className="flex gap-2">
         <Input
           value={topic}

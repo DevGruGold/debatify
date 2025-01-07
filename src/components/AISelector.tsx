@@ -49,44 +49,44 @@ export const AISelector = ({ onSelectionChange }: AISelectorProps) => {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-8">
-      <div className="space-y-4">
+    <div className="w-full max-w-2xl mx-auto mb-4">
+      <div className="space-y-3">
         <div>
-          <h3 className="text-lg font-semibold mb-2">Select Participants (2-4)</h3>
+          <h3 className="text-base font-semibold mb-2">Select Participants (2-4)</h3>
           <div className="flex flex-wrap gap-2">
             {availableAIs.filter(ai => ai.role === "participant").map((ai) => (
               <button
                 key={ai.id}
                 onClick={() => handleParticipantToggle(ai.id)}
                 disabled={selectedParticipants.length <= 2 && selectedParticipants.includes(ai.id)}
-                className={`px-4 py-2 rounded-full flex items-center gap-2 transition-colors ${
+                className={`px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-colors text-sm ${
                   selectedParticipants.includes(ai.id)
                     ? ai.colorClass + " text-white"
                     : "bg-gray-100 text-gray-700"
                 }`}
               >
                 {ai.name}
-                {selectedParticipants.includes(ai.id) && <Check className="w-4 h-4" />}
+                {selectedParticipants.includes(ai.id) && <Check className="w-3 h-3" />}
               </button>
             ))}
           </div>
         </div>
         
         <div>
-          <h3 className="text-lg font-semibold mb-2">Select Moderator</h3>
+          <h3 className="text-base font-semibold mb-2">Select Moderator</h3>
           <div className="flex flex-wrap gap-2">
             {availableAIs.map((ai) => (
               <button
                 key={ai.id}
                 onClick={() => handleModeratorSelect(ai.id)}
-                className={`px-4 py-2 rounded-full flex items-center gap-2 transition-colors ${
+                className={`px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-colors text-sm ${
                   selectedModerator === ai.id
                     ? ai.colorClass + " text-white"
                     : "bg-gray-100 text-gray-700"
                 }`}
               >
                 {ai.name}
-                {selectedModerator === ai.id && <Check className="w-4 h-4" />}
+                {selectedModerator === ai.id && <Check className="w-3 h-3" />}
               </button>
             ))}
           </div>
