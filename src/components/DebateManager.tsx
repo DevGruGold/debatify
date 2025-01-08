@@ -28,24 +28,29 @@ export const DebateManager = ({
 
   useEffect(() => {
     const generateResponse = async () => {
-      if (!isDebating || activeAI >= participants.length || activeAI < 0) return;
+      if (!isDebating || activeAI >= participants.length || activeAI < 0) {
+        console.log('Skipping response generation:', { isDebating, activeAI, participantsLength: participants.length });
+        return;
+      }
 
       const currentAI = participants[activeAI];
-      if (!currentAI) return;
+      if (!currentAI) {
+        console.log('No current AI found for index:', activeAI);
+        return;
+      }
 
       try {
         console.log("Generating response for:", currentAI.name);
         
-        // Create context from previous responses
         const previousResponses = responses
           .slice(0, activeAI)
           .map((r, i) => participants[i]?.name + ': ' + r)
           .filter(r => r)
           .join('\n');
 
-        const context = `You are ${currentAI.name} participating in a debate about "${topic}". 
-          ${previousResponses ? `Previous responses:\n${previousResponses}\n` : ''}
-          Provide a concise, thoughtful response (2-3 sentences) continuing the debate.`;
+        const context = `Topic: "${topic}"
+${previousResponses ? `Previous responses:\n${previousResponses}\n` : ''}
+Provide a concise, thoughtful response (2-3 sentences) continuing the debate.`;
 
         console.log("Context:", context);
         

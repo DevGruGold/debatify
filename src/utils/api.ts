@@ -1,11 +1,19 @@
 export const generateAIResponse = async (aiName: string, context: string) => {
   try {
     console.log(`Generating response for ${aiName}...`);
+    console.log('Context:', context);
     
+    const apiKey = process.env.PERPLEXITY_API_KEY;
+    if (!apiKey) {
+      console.error('No API key found');
+      throw new Error('API key is missing');
+    }
+
+    console.log('Making API request...');
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -13,7 +21,7 @@ export const generateAIResponse = async (aiName: string, context: string) => {
         messages: [
           {
             role: 'system',
-            content: `You are ${aiName}, participating in a debate. Be concise and persuasive in your response.`
+            content: `You are ${aiName} participating in a debate. Be concise and persuasive.`
           },
           {
             role: 'user',
@@ -33,6 +41,11 @@ export const generateAIResponse = async (aiName: string, context: string) => {
     const data = await response.json();
     console.log('API response:', data);
     
+    if (!data.choices?.[0]?.message?.content) {
+      console.error('Invalid response format:', data);
+      throw new Error('Invalid response format');
+    }
+
     return data.choices[0].message.content;
   } catch (error) {
     console.error('Error generating AI response:', error);
