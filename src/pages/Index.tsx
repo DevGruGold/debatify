@@ -6,6 +6,9 @@ import { Moderator } from "@/components/Moderator";
 import { AISelector } from "@/components/AISelector";
 import { ChatOutput } from "@/components/ChatOutput";
 import { MessageSquare, Send } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 const DEBATE_DURATION = 60; // seconds
 
@@ -32,6 +35,75 @@ const Index = () => {
   const [moderator, setModerator] = useState<AI | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [winner, setWinner] = useState<string>("");
+  const [apiKey, setApiKey] = useState("");
+  const { toast } = useToast();
+
+  const generateAIResponse = async (aiName: string, context: string) => {
+    if (!apiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please enter your Perplexity API key to start the debate.",
+        variant: "destructive",
+      });
+      setIsDebating(false);
+      return null;
+    }
+
+    try {
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-sonar-small-128k-online',
+          messages: [
+            {
+              role: 'system',
+              content: `You are ${aiName}, participating in a debate. Be concise and persuasive in your response.`
+            },
+            {
+              role: 'user',
+              content: `Topic: ${topic}. ${context}`
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 150,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate response');
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate AI response. Please check your API key and try again.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const determineWinner = async () => {
+    if (!moderator) return participants[0].name;
+    
+    const context = `Based on the following debate responses on the topic "${topic}":
+      ${participants.map((p, i) => `${p.name}: ${responses[i]}`).join('\n')}
+      
+      Who provided the most compelling arguments? Respond with ONLY the name of the winner.`;
+    
+    const winnerResponse = await generateAIResponse(moderator.name, context);
+    if (!winnerResponse) return participants[0].name;
+    
+    // Extract just the AI name from the response
+    const winner = participants.find(p => winnerResponse.includes(p.name))?.name || participants[0].name;
+    return winner;
+  };
 
   const handleTopicSubmit = (newTopic: string) => {
     setTopic(newTopic);
@@ -43,38 +115,35 @@ const Index = () => {
     setWinner("");
   };
 
-  const determineWinner = () => {
-    // For this mock implementation, we'll randomly select a winner
-    // In a real implementation, this could be based on response quality, engagement, or other metrics
-    const randomIndex = Math.floor(Math.random() * participants.length);
-    return participants[randomIndex].name;
-  };
-
-  const handleTimeUp = () => {
+  const handleTimeUp = async () => {
     if (activeAI < participants.length - 1) {
-      setActiveAI(activeAI + 1);
-      setResponses(prev => {
-        const newResponses = [...prev];
-        const response = `Mock response for ${topic} from AI ${activeAI + 1}`;
-        newResponses[activeAI] = response;
-        
-        // Add message to chat output
-        setChatMessages(prev => [...prev, {
-          ai: participants[activeAI].name,
-          message: response,
-          timestamp: new Date()
-        }]);
-        
-        return newResponses;
-      });
+      const response = await generateAIResponse(
+        participants[activeAI].name,
+        `Provide your perspective on the topic. Previous responses: ${responses.filter(r => r).join(' | ')}`
+      );
+      
+      if (response) {
+        setResponses(prev => {
+          const newResponses = [...prev];
+          newResponses[activeAI] = response;
+          
+          setChatMessages(prev => [...prev, {
+            ai: participants[activeAI].name,
+            message: response,
+            timestamp: new Date()
+          }]);
+          
+          return newResponses;
+        });
+        setActiveAI(activeAI + 1);
+      }
     } else {
       setIsDebating(false);
-      const winnerName = determineWinner();
+      const winnerName = await determineWinner();
       setWinner(winnerName);
       const finalSummary = `After a thoughtful debate on "${topic}", ${winnerName} has been declared the winner! Their arguments were particularly compelling and well-structured.`;
       setSummary(finalSummary);
       
-      // Add moderator summary to chat output
       setChatMessages(prev => [...prev, {
         ai: moderator?.name || "Moderator",
         message: finalSummary,
@@ -106,6 +175,20 @@ const Index = () => {
             Experience the future of intellectual discourse with our AI-powered debate platform.
             Watch as leading AI models engage in thoughtful discussions on any topic you choose.
           </p>
+          
+          {/* API Key Input */}
+          <div className="max-w-md mx-auto mb-6">
+            <Input
+              type="password"
+              placeholder="Enter your Perplexity API key"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="mb-2"
+            />
+            <p className="text-sm text-gray-500">
+              Required to generate AI responses. Get your API key from Perplexity.
+            </p>
+          </div>
         </div>
       </section>
 
