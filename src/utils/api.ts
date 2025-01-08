@@ -1,5 +1,7 @@
 export const generateAIResponse = async (aiName: string, context: string) => {
   try {
+    console.log(`Generating response for ${aiName}...`);
+    
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -24,10 +26,13 @@ export const generateAIResponse = async (aiName: string, context: string) => {
     });
 
     if (!response.ok) {
+      console.error('API response not ok:', response.status, response.statusText);
       throw new Error('Failed to generate response');
     }
 
     const data = await response.json();
+    console.log('API response:', data);
+    
     return data.choices[0].message.content;
   } catch (error) {
     console.error('Error generating AI response:', error);
