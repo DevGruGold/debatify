@@ -49,7 +49,7 @@ const Index = () => {
       <main className="py-4 px-4">
         <div className="max-w-7xl mx-auto space-y-4">
           <AISelector onSelectionChange={handleAISelection} />
-          <TopicInput onSubmit={handleTopicSubmit} />
+          {!isDebating && <TopicInput onSubmit={handleTopicSubmit} />}
           
           {topic && (
             <>

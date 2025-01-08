@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AIParticipant } from "./AIParticipant";
 import { Moderator } from "./Moderator";
 import { ChatOutput } from "./ChatOutput";
@@ -25,6 +25,45 @@ export const DebateManager = ({
   const [summary, setSummary] = useState("");
   const [winner, setWinner] = useState<string>("");
   const { toast } = useToast();
+
+  useEffect(() => {
+    const generateResponse = async () => {
+      if (!isDebating || activeAI >= participants.length || activeAI < 0) return;
+
+      const currentAI = participants[activeAI];
+      if (!currentAI) return;
+
+      try {
+        const context = `You are ${currentAI.name} participating in a debate about "${topic}". 
+          Previous responses: ${responses.map((r, i) => participants[i]?.name + ': ' + r).join('\n')}
+          
+          Provide a concise, thoughtful response continuing the debate.`;
+
+        const response = await generateAIResponse(currentAI.name, context);
+        
+        setResponses(prev => {
+          const newResponses = [...prev];
+          newResponses[activeAI] = response;
+          return newResponses;
+        });
+
+        setChatMessages(prev => [...prev, {
+          ai: currentAI.name,
+          message: response,
+          timestamp: new Date()
+        }]);
+
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to generate AI response. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    generateResponse();
+  }, [activeAI, isDebating, participants, topic]);
 
   const determineWinner = async () => {
     try {
