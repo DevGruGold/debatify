@@ -40,12 +40,15 @@ export const DebateManager = ({
       }
 
       try {
-        console.log("Generating response for:", currentAI.name);
+        console.log("Starting response generation for:", currentAI.name);
+        console.log("Current chat messages:", chatMessages);
         
         // Build conversation history for context
         const conversationHistory = chatMessages
           .map(msg => `${msg.ai}: ${msg.message}`)
           .join('\n');
+
+        console.log("Built conversation history:", conversationHistory);
 
         const context = `Topic: "${topic}"
 Current debate state:
@@ -53,23 +56,30 @@ ${conversationHistory}
 
 You are ${currentAI.name}. Based on the conversation above, provide a thoughtful response (2-3 sentences) that addresses previous points and continues the debate.`;
 
-        console.log("Context with conversation history:", context);
+        console.log("Sending context to API:", context);
         
         const response = await generateAIResponse(currentAI.name, context);
-        console.log("Generated response:", response);
+        console.log("Received API response:", response);
         
         if (response) {
+          console.log("Updating responses array for AI:", currentAI.name);
           setResponses(prev => {
             const newResponses = [...prev];
             newResponses[activeAI] = response;
             return newResponses;
           });
 
+          console.log("Adding message to chat history");
           setChatMessages(prev => [...prev, {
             ai: currentAI.name,
             message: response,
             timestamp: new Date()
           }]);
+
+          toast({
+            title: "Response Generated",
+            description: `${currentAI.name} has responded to the debate.`,
+          });
         }
 
       } catch (error) {
@@ -89,9 +99,14 @@ You are ${currentAI.name}. Based on the conversation above, provide a thoughtful
     if (!moderator || responses.some(r => !r)) return;
 
     try {
+      console.log("Starting winner determination");
+      console.log("Current responses:", responses);
+      
       const fullDebateContext = chatMessages
         .map(msg => `${msg.ai}: ${msg.message}`)
         .join('\n');
+
+      console.log("Full debate context for winner determination:", fullDebateContext);
 
       const context = `Based on the following debate on the topic "${topic}":
 ${fullDebateContext}
@@ -99,7 +114,11 @@ ${fullDebateContext}
 Who provided the most compelling arguments? Respond with ONLY the name of the winner.`;
       
       const winnerResponse = await generateAIResponse(moderator.name, context);
+      console.log("Winner response from API:", winnerResponse);
+      
       const winner = participants.find(p => winnerResponse.includes(p.name))?.name || participants[0].name;
+      console.log("Determined winner:", winner);
+      
       setWinner(winner);
       
       const finalSummary = `After a thoughtful debate on "${topic}", ${winner} has been declared the winner! Their arguments were particularly compelling and well-structured.`;
@@ -110,6 +129,11 @@ Who provided the most compelling arguments? Respond with ONLY the name of the wi
         message: finalSummary,
         timestamp: new Date()
       }]);
+
+      toast({
+        title: "Debate Concluded",
+        description: `${winner} has won the debate!`,
+      });
     } catch (error) {
       console.error("Error determining winner:", error);
       toast({
