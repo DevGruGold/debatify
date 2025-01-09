@@ -42,17 +42,18 @@ export const DebateManager = ({
       try {
         console.log("Generating response for:", currentAI.name);
         
-        const previousResponses = responses
-          .slice(0, activeAI)
-          .map((r, i) => participants[i]?.name + ': ' + r)
-          .filter(r => r)
+        // Build conversation history for context
+        const conversationHistory = chatMessages
+          .map(msg => `${msg.ai}: ${msg.message}`)
           .join('\n');
 
         const context = `Topic: "${topic}"
-${previousResponses ? `Previous responses:\n${previousResponses}\n` : ''}
-Provide a concise, thoughtful response (2-3 sentences) continuing the debate.`;
+Current debate state:
+${conversationHistory}
 
-        console.log("Context:", context);
+You are ${currentAI.name}. Based on the conversation above, provide a thoughtful response (2-3 sentences) that addresses previous points and continues the debate.`;
+
+        console.log("Context with conversation history:", context);
         
         const response = await generateAIResponse(currentAI.name, context);
         console.log("Generated response:", response);
@@ -82,16 +83,20 @@ Provide a concise, thoughtful response (2-3 sentences) continuing the debate.`;
     };
 
     generateResponse();
-  }, [activeAI, isDebating, participants, topic, responses]);
+  }, [activeAI, isDebating, participants, topic, chatMessages]);
 
   const determineWinner = async () => {
     if (!moderator || responses.some(r => !r)) return;
 
     try {
-      const context = `Based on the following debate responses on the topic "${topic}":
-        ${participants.map((p, i) => `${p.name}: ${responses[i]}`).join('\n')}
-        
-        Who provided the most compelling arguments? Respond with ONLY the name of the winner.`;
+      const fullDebateContext = chatMessages
+        .map(msg => `${msg.ai}: ${msg.message}`)
+        .join('\n');
+
+      const context = `Based on the following debate on the topic "${topic}":
+${fullDebateContext}
+
+Who provided the most compelling arguments? Respond with ONLY the name of the winner.`;
       
       const winnerResponse = await generateAIResponse(moderator.name, context);
       const winner = participants.find(p => winnerResponse.includes(p.name))?.name || participants[0].name;
@@ -115,7 +120,6 @@ Provide a concise, thoughtful response (2-3 sentences) continuing the debate.`;
     }
   };
 
-  // Call determineWinner when all AIs have responded
   useEffect(() => {
     if (isDebating && responses.every(r => r) && !winner) {
       determineWinner();
