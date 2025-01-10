@@ -44,7 +44,10 @@ export const generateAIResponse = async (aiName: string, context: string) => {
         }
       ]);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error storing response in Supabase:', error);
+      throw error;
+    }
 
     return response;
   } catch (error) {
