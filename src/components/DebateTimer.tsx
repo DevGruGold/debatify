@@ -20,7 +20,7 @@ export const DebateTimer = ({ duration, onTimeUp, isActive }: DebateTimerProps) 
         if (prev <= 1) {
           clearInterval(timer);
           onTimeUp();
-          return 0;
+          return duration; // Reset to full duration for next exchange
         }
         return prev - 1;
       });
@@ -40,7 +40,7 @@ export const DebateTimer = ({ duration, onTimeUp, isActive }: DebateTimerProps) 
       <div className="text-2xl font-mono font-medium">{formatTime(timeLeft)}</div>
       <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className="h-full transition-all duration-1000 animate-color-shift"
+          className="h-full bg-blue-500 transition-all duration-1000"
           style={{
             width: `${(timeLeft / duration) * 100}%`,
           }}

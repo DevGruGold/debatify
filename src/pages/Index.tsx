@@ -5,7 +5,7 @@ import { AISelector } from "@/components/AISelector";
 import { DebateManager } from "@/components/DebateManager";
 import { MessageSquare, Send } from "lucide-react";
 
-const DEBATE_DURATION = 60; // seconds
+const DEBATE_DURATION = 10; // Changed to 10 seconds per exchange
 
 const Index = () => {
   const [topic, setTopic] = useState("");
@@ -18,6 +18,16 @@ const Index = () => {
     setTopic(newTopic);
     setActiveAI(0);
     setIsDebating(true);
+  };
+
+  const handleTimeUp = () => {
+    setActiveAI((prev) => {
+      if (prev >= participants.length - 1) {
+        setIsDebating(false);
+        return -1;
+      }
+      return prev + 1;
+    });
   };
 
   const handleAISelection = (selectedParticipants: any[], selectedModerator: any) => {
@@ -56,7 +66,7 @@ const Index = () => {
               <div className="w-full max-w-md mx-auto">
                 <DebateTimer
                   duration={DEBATE_DURATION}
-                  onTimeUp={() => setIsDebating(false)}
+                  onTimeUp={handleTimeUp}
                   isActive={isDebating}
                 />
               </div>
