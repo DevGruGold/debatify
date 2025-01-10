@@ -27,6 +27,8 @@ export const DebateManager = ({
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+
     const generateResponse = async () => {
       if (!isDebating || activeAI >= participants.length || activeAI < 0) {
         console.log('Skipping response generation:', { isDebating, activeAI, participantsLength: participants.length });
@@ -61,7 +63,7 @@ You are ${currentAI.name}. Based on the conversation above, provide a thoughtful
         const response = await generateAIResponse(currentAI.name, context);
         console.log("Received API response:", response);
         
-        if (response) {
+        if (response && isMounted) {
           console.log("Updating responses array for AI:", currentAI.name);
           setResponses(prev => {
             const newResponses = [...prev];
@@ -84,16 +86,21 @@ You are ${currentAI.name}. Based on the conversation above, provide a thoughtful
 
       } catch (error) {
         console.error("Error generating response:", error);
-        toast({
-          title: "Error",
-          description: "Failed to generate AI response. Please try again.",
-          variant: "destructive",
-        });
+        if (isMounted) {
+          toast({
+            title: "Error",
+            description: "Failed to generate AI response. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
     };
 
     generateResponse();
-  }, [activeAI, isDebating, participants, topic, chatMessages]);
+    return () => {
+      isMounted = false;
+    };
+  }, [activeAI, isDebating, participants, topic]);
 
   const determineWinner = async () => {
     if (!moderator || responses.some(r => !r)) return;
@@ -152,7 +159,9 @@ Who provided the most compelling arguments? Respond with ONLY the name of the wi
 
   return (
     <div className="space-y-6">
-      {moderator && <Moderator summary={summary} />}
+      {moderator && (
+        <Moderator summary={summary || `Current topic: "${topic}". The debate is ${isDebating ? 'in progress' : 'about to begin'}.`} />
+      )}
 
       {winner && (
         <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-white p-4 rounded-lg shadow-lg animate-bounce">

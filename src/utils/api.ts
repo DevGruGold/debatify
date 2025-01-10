@@ -39,7 +39,7 @@ export const generateAIResponse = async (aiName: string, context: string) => {
       .insert([
         {
           ai_name: aiName,
-          topic: context.split('"')[1] || context, // Extract topic from context
+          topic: context.split('"')[1] || "General Topic",
           response: response
         }
       ]);
@@ -49,6 +49,7 @@ export const generateAIResponse = async (aiName: string, context: string) => {
       throw error;
     }
 
+    console.log('Generated response:', response);
     return response;
   } catch (error) {
     console.error('Error generating AI response:', error);
