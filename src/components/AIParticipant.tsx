@@ -18,7 +18,9 @@ export const AIParticipant = ({ name, response, colorClass, isActive }: AIPartic
     >
       <h3 className="text-lg font-semibold mb-2 text-white">{name}</h3>
       <div className="bg-white bg-opacity-90 rounded p-4 min-h-[100px]">
-        <p className="text-gray-800">{response || "Waiting..."}</p>
+        <p className="text-gray-800">
+          {response || "Waiting for response..."}
+        </p>
       </div>
     </div>
   );

@@ -5,33 +5,35 @@ export const generateAIResponse = async (aiName: string, context: string) => {
     console.log(`Generating response for ${aiName}...`);
     console.log('Context:', context);
     
-    // Mock responses for testing
+    // Mock responses for testing - making them more visible and distinct
     const mockResponses: { [key: string]: string[] } = {
       'OpenAI': [
-        "I believe this topic requires careful consideration. Based on the evidence, we can see clear patterns emerging.",
-        "Let me offer a different perspective. When we examine the facts objectively, several key points stand out.",
-        "Building on previous arguments, I'd like to highlight some crucial aspects we haven't considered yet."
+        "As OpenAI, I strongly believe we should consider the technological implications. The evidence clearly shows that innovation drives progress.",
+        "From a data-driven perspective, I must emphasize that technological advancement has historically led to positive societal changes.",
+        "Let me present a clear argument: technology and human progress are inherently linked, as demonstrated by historical patterns."
       ],
       'Anthropic': [
-        "While I understand the previous points, we must also consider alternative viewpoints. The data suggests...",
-        "I respectfully disagree with some earlier statements. Let me explain why by examining the evidence.",
-        "There's another important dimension to this debate that we should explore further."
+        "Speaking as Anthropic, I must respectfully disagree. The ethical considerations here are paramount and cannot be ignored.",
+        "While I understand the previous points, we must consider the broader ethical implications and potential consequences.",
+        "From an ethical standpoint, I believe we need to carefully weigh the societal impact of these developments."
       ],
       'Google': [
-        "The research clearly shows several important trends that support my position on this matter.",
-        "Looking at this from a data-driven perspective, we can identify three key factors...",
-        "I'd like to present a counterargument based on recent studies and analysis."
+        "Based on Google's extensive research, the data indicates three key factors we must consider in this debate.",
+        "Our analysis shows clear patterns that support a more nuanced approach to this topic.",
+        "Drawing from our vast database of information, I can confidently state that this issue requires a balanced perspective."
       ],
       'DeepSeek': [
-        "Let's approach this systematically. The evidence points to several compelling conclusions.",
-        "I appreciate the previous arguments, but there are additional factors to consider.",
-        "When we examine this issue holistically, we find some interesting patterns."
+        "As DeepSeek, I propose we examine this from multiple angles. The evidence suggests a complex interplay of factors.",
+        "Let me offer a unique perspective: our research indicates that this topic has far-reaching implications.",
+        "Building on previous points, I'd like to highlight some crucial aspects we haven't considered yet."
       ]
     };
 
-    // Select a random response for each AI
+    // Select a random response for the AI
     const responses = mockResponses[aiName] || mockResponses['OpenAI'];
     const response = responses[Math.floor(Math.random() * responses.length)];
+
+    console.log(`Selected mock response for ${aiName}:`, response);
 
     // Store the response in Supabase
     const { error } = await supabase
@@ -49,7 +51,7 @@ export const generateAIResponse = async (aiName: string, context: string) => {
       throw error;
     }
 
-    console.log('Generated response:', response);
+    console.log('Successfully stored response in Supabase');
     return response;
   } catch (error) {
     console.error('Error generating AI response:', error);

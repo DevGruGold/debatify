@@ -16,14 +16,14 @@ export const ChatOutput = ({ messages }: ChatOutputProps) => {
       <CardContent className="p-4 max-h-[400px] overflow-y-auto">
         {messages.length === 0 ? (
           <p className="text-gray-500 text-center py-4">
-            AI responses will appear here during the debate
+            Waiting for AI responses...
           </p>
         ) : (
           <div className="space-y-4">
             {messages.map((msg, index) => (
               <div key={index} className="flex flex-col space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{msg.ai}</span>
+                  <span className="font-medium text-sm text-blue-600">{msg.ai}</span>
                   <span className="text-xs text-gray-500">
                     {msg.timestamp.toLocaleTimeString()}
                   </span>
