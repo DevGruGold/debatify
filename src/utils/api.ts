@@ -5,38 +5,24 @@ export const generateAIResponse = async (aiName: string, context: string) => {
     console.log(`Generating response for ${aiName}...`);
     console.log('Context:', context);
     
-    // Mock responses for testing - making them more visible and distinct
-    const mockResponses: { [key: string]: string[] } = {
-      'OpenAI': [
-        "As OpenAI, I strongly believe we should consider the technological implications. The evidence clearly shows that innovation drives progress.",
-        "From a data-driven perspective, I must emphasize that technological advancement has historically led to positive societal changes.",
-        "Let me present a clear argument: technology and human progress are inherently linked, as demonstrated by historical patterns."
-      ],
-      'Anthropic': [
-        "Speaking as Anthropic, I must respectfully disagree. The ethical considerations here are paramount and cannot be ignored.",
-        "While I understand the previous points, we must consider the broader ethical implications and potential consequences.",
-        "From an ethical standpoint, I believe we need to carefully weigh the societal impact of these developments."
-      ],
-      'Google': [
-        "Based on Google's extensive research, the data indicates three key factors we must consider in this debate.",
-        "Our analysis shows clear patterns that support a more nuanced approach to this topic.",
-        "Drawing from our vast database of information, I can confidently state that this issue requires a balanced perspective."
-      ],
-      'DeepSeek': [
-        "As DeepSeek, I propose we examine this from multiple angles. The evidence suggests a complex interplay of factors.",
-        "Let me offer a unique perspective: our research indicates that this topic has far-reaching implications.",
-        "Building on previous points, I'd like to highlight some crucial aspects we haven't considered yet."
-      ]
-    };
+    // Call Supabase Edge Function to generate AI response
+    const { data, error } = await supabase.functions.invoke('generate-ai-response', {
+      body: {
+        aiName,
+        context
+      }
+    });
 
-    // Select a random response for the AI
-    const responses = mockResponses[aiName] || mockResponses['OpenAI'];
-    const response = responses[Math.floor(Math.random() * responses.length)];
+    if (error) {
+      console.error('Error calling edge function:', error);
+      throw error;
+    }
 
-    console.log(`Selected mock response for ${aiName}:`, response);
+    const response = data.generatedText;
+    console.log(`Generated response for ${aiName}:`, response);
 
     // Store the response in Supabase
-    const { error } = await supabase
+    const { error: dbError } = await supabase
       .from('debate_responses')
       .insert([
         {
@@ -46,9 +32,9 @@ export const generateAIResponse = async (aiName: string, context: string) => {
         }
       ]);
 
-    if (error) {
-      console.error('Error storing response in Supabase:', error);
-      throw error;
+    if (dbError) {
+      console.error('Error storing response in Supabase:', dbError);
+      throw dbError;
     }
 
     console.log('Successfully stored response in Supabase');
