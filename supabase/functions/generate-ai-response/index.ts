@@ -9,17 +9,22 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { aiName, context } = await req.json();
+    console.log('Starting generate-ai-response function');
+    
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not found in environment variables');
+      throw new Error('OpenAI API key not configured');
+    }
 
-    // Create a system message that defines the AI's role and personality
-    const systemMessage = `You are ${aiName}, an AI participating in a debate. 
-    Your responses should be thoughtful, concise (2-3 sentences), and maintain a respectful tone. 
-    Focus on building upon or respectfully challenging previous points while staying on topic.`;
+    const { aiName, context } = await req.json();
+    console.log('Received request for AI:', aiName);
+    console.log('Context:', context);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -30,7 +35,10 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: systemMessage },
+          { 
+            role: 'system', 
+            content: `You are ${aiName}, an AI participating in a debate. Your responses should be thoughtful, concise (2-3 sentences), and maintain a respectful tone.` 
+          },
           { role: 'user', content: context }
         ],
         temperature: 0.7,
@@ -38,20 +46,27 @@ serve(async (req) => {
       }),
     });
 
+    console.log('OpenAI API response status:', response.status);
+    
     const data = await response.json();
     
     if (data.error) {
+      console.error('OpenAI API error:', data.error);
       throw new Error(data.error.message);
     }
 
     const generatedText = data.choices[0].message.content;
+    console.log('Generated response:', generatedText);
 
     return new Response(JSON.stringify({ generatedText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in generate-ai-response function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: 'Check the function logs for more information'
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
