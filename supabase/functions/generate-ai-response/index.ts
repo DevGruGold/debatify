@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -33,7 +34,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-3.5-turbo',
         messages: [
           { 
             role: 'system', 
@@ -50,9 +51,9 @@ serve(async (req) => {
     
     const data = await response.json();
     
-    if (data.error) {
-      console.error('OpenAI API error:', data.error);
-      throw new Error(data.error.message);
+    if (!response.ok) {
+      console.error('OpenAI API error:', data);
+      throw new Error(data.error?.message || 'Failed to generate AI response');
     }
 
     const generatedText = data.choices[0].message.content;

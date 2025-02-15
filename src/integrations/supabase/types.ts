@@ -60,6 +60,30 @@ export type Database = {
         }
         Relationships: []
       }
+      debate_responses: {
+        Row: {
+          ai_name: string
+          created_at: string
+          id: string
+          response: string
+          topic: string
+        }
+        Insert: {
+          ai_name: string
+          created_at?: string
+          id?: string
+          response: string
+          topic: string
+        }
+        Update: {
+          ai_name?: string
+          created_at?: string
+          id?: string
+          response?: string
+          topic?: string
+        }
+        Relationships: []
+      }
       historical_figures: {
         Row: {
           created_at: string

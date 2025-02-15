@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export const generateAIResponse = async (aiName: string, context: string) => {
@@ -16,6 +17,11 @@ export const generateAIResponse = async (aiName: string, context: string) => {
     if (error) {
       console.error('Error calling edge function:', error);
       throw error;
+    }
+
+    if (!data?.generatedText) {
+      console.error('No generated text in response:', data);
+      throw new Error('Failed to generate AI response');
     }
 
     const response = data.generatedText;
