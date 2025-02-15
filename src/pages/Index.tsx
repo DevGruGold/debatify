@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { TopicInput } from "@/components/TopicInput";
 import { DebateTimer } from "@/components/DebateTimer";
@@ -5,7 +6,7 @@ import { AISelector } from "@/components/AISelector";
 import { DebateManager } from "@/components/DebateManager";
 import { MessageSquare, Send } from "lucide-react";
 
-const DEBATE_DURATION = 10; // Changed to 10 seconds per exchange
+const DEBATE_DURATION = 30; // Increased to 30 seconds per exchange for more thoughtful responses
 
 const Index = () => {
   const [topic, setTopic] = useState("");
@@ -15,6 +16,10 @@ const Index = () => {
   const [moderator, setModerator] = useState<any>(null);
 
   const handleTopicSubmit = (newTopic: string) => {
+    if (!participants.length) {
+      alert("Please select AI participants first!");
+      return;
+    }
     setTopic(newTopic);
     setActiveAI(0);
     setIsDebating(true);
@@ -31,6 +36,11 @@ const Index = () => {
   };
 
   const handleAISelection = (selectedParticipants: any[], selectedModerator: any) => {
+    // Ensure we have at least two participants for a debate
+    if (selectedParticipants.length < 2) {
+      alert("Please select at least two AI participants for the debate.");
+      return;
+    }
     setParticipants(selectedParticipants);
     setModerator(selectedModerator);
   };
@@ -58,12 +68,17 @@ const Index = () => {
       {/* Main Content */}
       <main className="py-4 px-4">
         <div className="max-w-7xl mx-auto space-y-4">
-          <AISelector onSelectionChange={handleAISelection} />
-          {!isDebating && <TopicInput onSubmit={handleTopicSubmit} />}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Setup Your Debate</h2>
+            <AISelector onSelectionChange={handleAISelection} />
+            {!isDebating && participants.length >= 2 && (
+              <TopicInput onSubmit={handleTopicSubmit} />
+            )}
+          </div>
           
           {topic && (
-            <>
-              <div className="w-full max-w-md mx-auto">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="w-full max-w-md mx-auto mb-6">
                 <DebateTimer
                   duration={DEBATE_DURATION}
                   onTimeUp={handleTimeUp}
@@ -78,13 +93,13 @@ const Index = () => {
                 isDebating={isDebating}
                 activeAI={activeAI}
               />
-            </>
+            </div>
           )}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 px-4">
+      <footer className="bg-gray-900 text-white py-8 px-4 mt-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
