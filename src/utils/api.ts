@@ -16,6 +16,12 @@ export const generateAIResponse = async (aiName: string, context: string) => {
 
     if (error) {
       console.error('Error calling edge function:', error);
+      
+      // Check for specific error types and provide user-friendly messages
+      if (error.message?.includes('exceeded your current quota')) {
+        throw new Error(`${aiName}'s API quota has been exceeded. Please try another AI provider.`);
+      }
+      
       throw error;
     }
 

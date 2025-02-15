@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -35,7 +36,11 @@ async function generateOpenAIResponse(aiName: string, context: string) {
   });
   
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || 'OpenAI API error');
+  if (!response.ok) {
+    const error = new Error(data.error?.message || 'OpenAI API error');
+    error.name = 'OpenAIError';
+    throw error;
+  }
   return data.choices[0].message.content;
 }
 
@@ -159,29 +164,36 @@ serve(async (req) => {
 
     let generatedText;
     
-    switch (aiName.toLowerCase()) {
-      case 'openai':
-        if (!openAIApiKey) throw new Error('OpenAI API key not configured');
-        generatedText = await generateOpenAIResponse(aiName, context);
-        break;
-      case 'anthropic':
-        if (!anthropicApiKey) throw new Error('Anthropic API key not configured');
-        generatedText = await generateAnthropicResponse(aiName, context);
-        break;
-      case 'google':
-        if (!geminiApiKey) throw new Error('Gemini API key not configured');
-        generatedText = await generateGeminiResponse(aiName, context);
-        break;
-      case 'deepseek':
-        if (!deepseekApiKey) throw new Error('Deepseek API key not configured');
-        generatedText = await generateDeepseekResponse(aiName, context);
-        break;
-      case 'meta':
-        if (!metaApiKey) throw new Error('Meta API key not configured');
-        generatedText = await generateMetaResponse(aiName, context);
-        break;
-      default:
-        throw new Error(`Unsupported AI provider: ${aiName}`);
+    try {
+      switch (aiName.toLowerCase()) {
+        case 'openai':
+          if (!openAIApiKey) throw new Error('OpenAI API key not configured');
+          generatedText = await generateOpenAIResponse(aiName, context);
+          break;
+        case 'anthropic':
+          if (!anthropicApiKey) throw new Error('Anthropic API key not configured');
+          generatedText = await generateAnthropicResponse(aiName, context);
+          break;
+        case 'google':
+          if (!geminiApiKey) throw new Error('Gemini API key not configured');
+          generatedText = await generateGeminiResponse(aiName, context);
+          break;
+        case 'deepseek':
+          if (!deepseekApiKey) throw new Error('Deepseek API key not configured');
+          generatedText = await generateDeepseekResponse(aiName, context);
+          break;
+        case 'meta':
+          if (!metaApiKey) throw new Error('Meta API key not configured');
+          generatedText = await generateMetaResponse(aiName, context);
+          break;
+        default:
+          throw new Error(`Unsupported AI provider: ${aiName}`);
+      }
+    } catch (error) {
+      // Preserve and enhance error information
+      const errorMessage = error.message || 'Unknown error occurred';
+      const enhancedError = new Error(`Error with ${aiName} API: ${errorMessage}`);
+      throw enhancedError;
     }
 
     console.log('Generated response:', generatedText);
