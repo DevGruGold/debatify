@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -7,6 +6,7 @@ const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
 const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
+const metaApiKey = Deno.env.get('META_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -116,6 +116,35 @@ async function generateDeepseekResponse(aiName: string, context: string) {
   return data.choices[0].message.content;
 }
 
+async function generateMetaResponse(aiName: string, context: string) {
+  const response = await fetch('https://api.llama.meta.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${metaApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-2-70b-chat',
+      messages: [
+        {
+          role: 'system',
+          content: `You are ${aiName}, participating in a debate. Keep responses thoughtful but concise (2-3 sentences).`
+        },
+        {
+          role: 'user',
+          content: context
+        }
+      ],
+      max_tokens: 150,
+      temperature: 0.7
+    }),
+  });
+  
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || 'Meta API error');
+  return data.choices[0].message.content;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -146,6 +175,10 @@ serve(async (req) => {
       case 'deepseek':
         if (!deepseekApiKey) throw new Error('Deepseek API key not configured');
         generatedText = await generateDeepseekResponse(aiName, context);
+        break;
+      case 'meta':
+        if (!metaApiKey) throw new Error('Meta API key not configured');
+        generatedText = await generateMetaResponse(aiName, context);
         break;
       default:
         throw new Error(`Unsupported AI provider: ${aiName}`);
