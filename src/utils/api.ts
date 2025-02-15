@@ -1,6 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Track disabled AIs due to quota/errors
+export const disabledAIs = new Set<string>();
+
 export const generateAIResponse = async (aiName: string, context: string) => {
   try {
     console.log(`Generating response for ${aiName}...`);
@@ -18,7 +21,9 @@ export const generateAIResponse = async (aiName: string, context: string) => {
       console.error('Error calling edge function:', error);
       
       // Check for specific error types and provide user-friendly messages
-      if (error.message?.includes('exceeded your current quota')) {
+      if (error.message?.includes('exceeded your current quota') || 
+          error.message?.includes('API quota')) {
+        disabledAIs.add(aiName.toLowerCase());
         throw new Error(`${aiName}'s API quota has been exceeded. Please try another AI provider.`);
       }
       
@@ -48,6 +53,9 @@ export const generateAIResponse = async (aiName: string, context: string) => {
       console.error('Error storing response in Supabase:', dbError);
       throw dbError;
     }
+
+    // If successful, ensure this AI is not marked as disabled
+    disabledAIs.delete(aiName.toLowerCase());
 
     console.log('Successfully stored response in Supabase');
     return response;
