@@ -77,19 +77,13 @@ You are ${currentAI.name}. Based on the conversation above, provide a thoughtful
             message: response,
             timestamp: new Date()
           }]);
-
-          toast({
-            title: "Response Generated",
-            description: `${currentAI.name} has responded to the debate.`,
-          });
         }
-
       } catch (error) {
         console.error("Error generating response:", error);
         if (isMounted) {
           toast({
             title: "Error",
-            description: "Failed to generate AI response. Please try again.",
+            description: `Failed to generate response from ${currentAI.name}. Trying next AI...`,
             variant: "destructive",
           });
         }

@@ -2,12 +2,11 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-// Get API keys from environment
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
 const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
-const metaApiKey = Deno.env.get('META_API_KEY');
+const metaApiKey = Deno.env.get('META_LLAMA_AI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +14,7 @@ const corsHeaders = {
 };
 
 async function generateOpenAIResponse(aiName: string, context: string) {
+  console.log('Generating OpenAI response...');
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -22,7 +22,7 @@ async function generateOpenAIResponse(aiName: string, context: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o-mini',
       messages: [
         { 
           role: 'system', 
@@ -37,14 +37,14 @@ async function generateOpenAIResponse(aiName: string, context: string) {
   
   const data = await response.json();
   if (!response.ok) {
-    const error = new Error(data.error?.message || 'OpenAI API error');
-    error.name = 'OpenAIError';
-    throw error;
+    console.error('OpenAI API error:', data);
+    throw new Error(data.error?.message || 'OpenAI API error');
   }
   return data.choices[0].message.content;
 }
 
 async function generateAnthropicResponse(aiName: string, context: string) {
+  console.log('Generating Anthropic response...');
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -63,11 +63,15 @@ async function generateAnthropicResponse(aiName: string, context: string) {
   });
   
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || 'Anthropic API error');
+  if (!response.ok) {
+    console.error('Anthropic API error:', data);
+    throw new Error(data.error?.message || 'Anthropic API error');
+  }
   return data.content[0].text;
 }
 
 async function generateGeminiResponse(aiName: string, context: string) {
+  console.log('Generating Gemini response...');
   const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
     method: 'POST',
     headers: {
@@ -88,11 +92,15 @@ async function generateGeminiResponse(aiName: string, context: string) {
   });
   
   const data = await response.json();
-  if (!response.ok) throw new Error('Gemini API error');
+  if (!response.ok) {
+    console.error('Gemini API error:', data);
+    throw new Error('Gemini API error');
+  }
   return data.candidates[0].content.parts[0].text;
 }
 
 async function generateDeepseekResponse(aiName: string, context: string) {
+  console.log('Generating Deepseek response...');
   const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -117,11 +125,15 @@ async function generateDeepseekResponse(aiName: string, context: string) {
   });
   
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || 'Deepseek API error');
+  if (!response.ok) {
+    console.error('Deepseek API error:', data);
+    throw new Error(data.error?.message || 'Deepseek API error');
+  }
   return data.choices[0].message.content;
 }
 
 async function generateMetaResponse(aiName: string, context: string) {
+  console.log('Generating Meta response...');
   const response = await fetch('https://api.llama.meta.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -146,11 +158,15 @@ async function generateMetaResponse(aiName: string, context: string) {
   });
   
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || 'Meta API error');
+  if (!response.ok) {
+    console.error('Meta API error:', data);
+    throw new Error(data.error?.message || 'Meta API error');
+  }
   return data.choices[0].message.content;
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -189,18 +205,16 @@ serve(async (req) => {
         default:
           throw new Error(`Unsupported AI provider: ${aiName}`);
       }
+
+      console.log('Generated response:', generatedText);
+
+      return new Response(JSON.stringify({ generatedText }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     } catch (error) {
-      // Preserve and enhance error information
-      const errorMessage = error.message || 'Unknown error occurred';
-      const enhancedError = new Error(`Error with ${aiName} API: ${errorMessage}`);
-      throw enhancedError;
+      console.error(`Error with ${aiName} API:`, error);
+      throw error;
     }
-
-    console.log('Generated response:', generatedText);
-
-    return new Response(JSON.stringify({ generatedText }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
   } catch (error) {
     console.error('Error in generate-ai-response function:', error);
     return new Response(JSON.stringify({ 
