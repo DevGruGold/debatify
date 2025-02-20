@@ -26,8 +26,31 @@ interface AISelectorProps {
 
 export const AISelector = ({ onSelectionChange }: AISelectorProps) => {
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
-  const [selectedModerator, setSelectedModerator] = useState<string>("deepseek");
+  const [selectedModerator, setSelectedModerator] = useState<string>("");
   const { toast } = useToast();
+
+  // Initial check for disabled AIs
+  useEffect(() => {
+    const testAIs = async () => {
+      for (const ai of availableAIs) {
+        try {
+          const response = await fetch('/api/test-ai-availability', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ aiName: ai.id })
+          });
+          
+          if (!response.ok) {
+            disabledAIs.add(ai.id.toLowerCase());
+          }
+        } catch (error) {
+          console.error(`Error testing ${ai.name} availability:`, error);
+          disabledAIs.add(ai.id.toLowerCase());
+        }
+      }
+    };
+    testAIs();
+  }, []);
 
   // Monitor disabled AIs and update selections accordingly
   useEffect(() => {
@@ -35,24 +58,19 @@ export const AISelector = ({ onSelectionChange }: AISelectorProps) => {
       // Remove disabled AIs from participants
       setSelectedParticipants(prev => {
         const newSelection = prev.filter(id => !disabledAIs.has(id.toLowerCase()));
-        return newSelection.length >= 2 ? newSelection : prev;
+        return newSelection;
       });
 
       // Change moderator if disabled
-      if (disabledAIs.has(selectedModerator.toLowerCase())) {
-        const availableModerator = availableAIs.find(ai => 
-          !disabledAIs.has(ai.id.toLowerCase())
-        );
-        if (availableModerator) {
-          setSelectedModerator(availableModerator.id);
-          toast({
-            title: "Moderator Changed",
-            description: `${selectedModerator} is currently unavailable. ${availableModerator.name} has been selected as the new moderator.`,
-          });
-        }
+      if (selectedModerator && disabledAIs.has(selectedModerator.toLowerCase())) {
+        setSelectedModerator("");
+        toast({
+          title: "Moderator Unavailable",
+          description: `${selectedModerator} is currently unavailable. Please select a new moderator.`,
+        });
       }
     }
-  }, [disabledAIs]);
+  }, [disabledAIs, selectedModerator]);
 
   const handleParticipantToggle = (aiId: string) => {
     const ai = availableAIs.find(ai => ai.id === aiId);
@@ -61,7 +79,7 @@ export const AISelector = ({ onSelectionChange }: AISelectorProps) => {
     if (disabledAIs.has(aiId.toLowerCase())) {
       toast({
         title: "AI Unavailable",
-        description: `${ai.name} is currently unavailable due to API quota limits. Please try again later.`,
+        description: `${ai.name} is currently unavailable. Please try again later.`,
         variant: "destructive",
       });
       return;
@@ -71,20 +89,16 @@ export const AISelector = ({ onSelectionChange }: AISelectorProps) => {
       const newSelection = prev.includes(aiId)
         ? prev.filter(id => id !== aiId)
         : [...prev, aiId];
-      
-      // Validate selection size
-      if (newSelection.length < 2) {
-        toast({
-          title: "Selection Required",
-          description: "Please select at least 2 participants for the debate.",
-        });
+
+      // Update parent component only if we have valid selections
+      if (newSelection.length >= 2 && selectedModerator) {
+        const participants = availableAIs.filter(ai => 
+          newSelection.includes(ai.id)
+        );
+        const moderator = availableAIs.find(ai => ai.id === selectedModerator)!;
+        onSelectionChange(participants, moderator);
       }
-      
-      const participants = availableAIs.filter(ai => 
-        newSelection.includes(ai.id)
-      );
-      const moderator = availableAIs.find(ai => ai.id === selectedModerator)!;
-      onSelectionChange(participants, moderator);
+
       return newSelection;
     });
   };
@@ -96,18 +110,21 @@ export const AISelector = ({ onSelectionChange }: AISelectorProps) => {
     if (disabledAIs.has(aiId.toLowerCase())) {
       toast({
         title: "AI Unavailable",
-        description: `${ai.name} is currently unavailable due to API quota limits. Please try again later.`,
+        description: `${ai.name} is currently unavailable. Please try again later.`,
         variant: "destructive",
       });
       return;
     }
 
     setSelectedModerator(aiId);
-    const participants = availableAIs.filter(ai => 
-      selectedParticipants.includes(ai.id)
-    );
-    const moderator = ai;
-    onSelectionChange(participants, moderator);
+    
+    // Update parent component only if we have valid selections
+    if (selectedParticipants.length >= 2) {
+      const participants = availableAIs.filter(ai => 
+        selectedParticipants.includes(ai.id)
+      );
+      onSelectionChange(participants, ai);
+    }
   };
 
   return (
@@ -137,6 +154,9 @@ export const AISelector = ({ onSelectionChange }: AISelectorProps) => {
               );
             })}
           </div>
+          {selectedParticipants.length > 0 && selectedParticipants.length < 2 && (
+            <p className="text-sm text-amber-600 mt-2">Please select at least 2 participants.</p>
+          )}
         </div>
         
         <div>
@@ -163,6 +183,9 @@ export const AISelector = ({ onSelectionChange }: AISelectorProps) => {
               );
             })}
           </div>
+          {!selectedModerator && (
+            <p className="text-sm text-amber-600 mt-2">Please select a moderator.</p>
+          )}
         </div>
       </div>
     </div>
