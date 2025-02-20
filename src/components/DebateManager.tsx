@@ -1,9 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { AIParticipant } from "./AIParticipant";
 import { Moderator } from "./Moderator";
 import { ChatOutput } from "./ChatOutput";
 import { generateAIResponse } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 
 interface DebateManagerProps {
   participants: any[];
@@ -11,6 +14,7 @@ interface DebateManagerProps {
   topic: string;
   isDebating: boolean;
   activeAI: number;
+  onDebateEnd: () => void;
 }
 
 export const DebateManager = ({ 
@@ -18,7 +22,8 @@ export const DebateManager = ({
   moderator, 
   topic, 
   isDebating, 
-  activeAI 
+  activeAI,
+  onDebateEnd 
 }: DebateManagerProps) => {
   const [responses, setResponses] = useState<string[]>(new Array(participants.length).fill(""));
   const [chatMessages, setChatMessages] = useState<Array<{ ai: string; message: string; timestamp: Date }>>([]);
@@ -158,9 +163,22 @@ Who provided the most compelling arguments? Respond with ONLY the name of the wi
       )}
 
       {winner && (
-        <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-white p-4 rounded-lg shadow-lg animate-bounce">
-          <h3 className="text-xl font-bold">🏆 Winner Announced!</h3>
-          <p className="mt-2">{winner} has won the debate!</p>
+        <div className="space-y-4">
+          <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-white p-4 rounded-lg shadow-lg animate-bounce">
+            <h3 className="text-xl font-bold">🏆 Winner Announced!</h3>
+            <p className="mt-2">{winner} has won the debate!</p>
+          </div>
+          
+          <div className="flex justify-center">
+            <Button 
+              onClick={onDebateEnd}
+              variant="outline"
+              className="gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Start New Debate
+            </Button>
+          </div>
         </div>
       )}
 

@@ -5,8 +5,9 @@ import { DebateTimer } from "@/components/DebateTimer";
 import { AISelector } from "@/components/AISelector";
 import { DebateManager } from "@/components/DebateManager";
 import { MessageSquare, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-const DEBATE_DURATION = 30; // Increased to 30 seconds per exchange for more thoughtful responses
+const DEBATE_DURATION = 30;
 
 const Index = () => {
   const [topic, setTopic] = useState("");
@@ -14,6 +15,7 @@ const Index = () => {
   const [isDebating, setIsDebating] = useState(false);
   const [participants, setParticipants] = useState<any[]>([]);
   const [moderator, setModerator] = useState<any>(null);
+  const [debateKey, setDebateKey] = useState(0); // Add key for forcing re-render
 
   const handleTopicSubmit = (newTopic: string) => {
     if (!participants.length) {
@@ -35,8 +37,16 @@ const Index = () => {
     });
   };
 
+  const handleDebateEnd = () => {
+    setTopic("");
+    setActiveAI(-1);
+    setIsDebating(false);
+    setParticipants([]);
+    setModerator(null);
+    setDebateKey(prev => prev + 1); // Force re-render of components
+  };
+
   const handleAISelection = (selectedParticipants: any[], selectedModerator: any) => {
-    // Ensure we have at least two participants for a debate
     if (selectedParticipants.length < 2) {
       alert("Please select at least two AI participants for the debate.");
       return;
@@ -70,7 +80,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Setup Your Debate</h2>
-            <AISelector onSelectionChange={handleAISelection} />
+            <AISelector key={`ai-selector-${debateKey}`} onSelectionChange={handleAISelection} />
             {!isDebating && participants.length >= 2 && (
               <TopicInput onSubmit={handleTopicSubmit} />
             )}
@@ -87,11 +97,13 @@ const Index = () => {
               </div>
 
               <DebateManager
+                key={`debate-manager-${debateKey}`}
                 participants={participants}
                 moderator={moderator}
                 topic={topic}
                 isDebating={isDebating}
                 activeAI={activeAI}
+                onDebateEnd={handleDebateEnd}
               />
             </div>
           )}
