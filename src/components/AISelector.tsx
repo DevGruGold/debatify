@@ -25,7 +25,7 @@ interface AISelectorProps {
 }
 
 export const AISelector = ({ onSelectionChange }: AISelectorProps) => {
-  const [selectedParticipants, setSelectedParticipants] = useState<string[]>(["openai", "anthropic", "google"]);
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [selectedModerator, setSelectedModerator] = useState<string>("deepseek");
   const { toast } = useToast();
 
@@ -71,6 +71,14 @@ export const AISelector = ({ onSelectionChange }: AISelectorProps) => {
       const newSelection = prev.includes(aiId)
         ? prev.filter(id => id !== aiId)
         : [...prev, aiId];
+      
+      // Validate selection size
+      if (newSelection.length < 2) {
+        toast({
+          title: "Selection Required",
+          description: "Please select at least 2 participants for the debate.",
+        });
+      }
       
       const participants = availableAIs.filter(ai => 
         newSelection.includes(ai.id)
